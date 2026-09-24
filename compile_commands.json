@@ -1,0 +1,68 @@
+[
+{
+  "directory": "C:/project/Graphics/VulkanTriangle/build",
+  "command": "C:\\msys64\\mingw64\\bin\\clang++.exe  -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui\\backends -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\glfw\\include -isystem C:\\VulkanSDK\\1.4.357.0\\include -std=gnu++20 -o CMakeFiles\\imgui.dir\\third_party\\imgui\\imgui.cpp.obj -c C:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui\\imgui.cpp",
+  "file": "C:/project/Graphics/VulkanTriangle/third_party/imgui/imgui.cpp",
+  "output": "CMakeFiles/imgui.dir/third_party/imgui/imgui.cpp.obj"
+},
+{
+  "directory": "C:/project/Graphics/VulkanTriangle/build",
+  "command": "C:\\msys64\\mingw64\\bin\\clang++.exe  -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui\\backends -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\glfw\\include -isystem C:\\VulkanSDK\\1.4.357.0\\include -std=gnu++20 -o CMakeFiles\\imgui.dir\\third_party\\imgui\\imgui_demo.cpp.obj -c C:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui\\imgui_demo.cpp",
+  "file": "C:/project/Graphics/VulkanTriangle/third_party/imgui/imgui_demo.cpp",
+  "output": "CMakeFiles/imgui.dir/third_party/imgui/imgui_demo.cpp.obj"
+},
+{
+  "directory": "C:/project/Graphics/VulkanTriangle/build",
+  "command": "C:\\msys64\\mingw64\\bin\\clang++.exe  -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui\\backends -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\glfw\\include -isystem C:\\VulkanSDK\\1.4.357.0\\include -std=gnu++20 -o CMakeFiles\\imgui.dir\\third_party\\imgui\\imgui_draw.cpp.obj -c C:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui\\imgui_draw.cpp",
+  "file": "C:/project/Graphics/VulkanTriangle/third_party/imgui/imgui_draw.cpp",
+  "output": "CMakeFiles/imgui.dir/third_party/imgui/imgui_draw.cpp.obj"
+},
+{
+  "directory": "C:/project/Graphics/VulkanTriangle/build",
+  "command": "C:\\msys64\\mingw64\\bin\\clang++.exe  -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui\\backends -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\glfw\\include -isystem C:\\VulkanSDK\\1.4.357.0\\include -std=gnu++20 -o CMakeFiles\\imgui.dir\\third_party\\imgui\\imgui_tables.cpp.obj -c C:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui\\imgui_tables.cpp",
+  "file": "C:/project/Graphics/VulkanTriangle/third_party/imgui/imgui_tables.cpp",
+  "output": "CMakeFiles/imgui.dir/third_party/imgui/imgui_tables.cpp.obj"
+},
+{
+  "directory": "C:/project/Graphics/VulkanTriangle/build",
+  "command": "C:\\msys64\\mingw64\\bin\\clang++.exe  -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui\\backends -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\glfw\\include -isystem C:\\VulkanSDK\\1.4.357.0\\include -std=gnu++20 -o CMakeFiles\\imgui.dir\\third_party\\imgui\\imgui_widgets.cpp.obj -c C:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui\\imgui_widgets.cpp",
+  "file": "C:/project/Graphics/VulkanTriangle/third_party/imgui/imgui_widgets.cpp",
+  "output": "CMakeFiles/imgui.dir/third_party/imgui/imgui_widgets.cpp.obj"
+},
+{
+  "directory": "C:/project/Graphics/VulkanTriangle/build",
+  "command": "C:\\msys64\\mingw64\\bin\\clang++.exe  -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui\\backends -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\glfw\\include -isystem C:\\VulkanSDK\\1.4.357.0\\include -std=gnu++20 -o CMakeFiles\\imgui.dir\\third_party\\imgui\\backends\\imgui_impl_glfw.cpp.obj -c C:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui\\backends\\imgui_impl_glfw.cpp",
+  "file": "C:/project/Graphics/VulkanTriangle/third_party/imgui/backends/imgui_impl_glfw.cpp",
+  "output": "CMakeFiles/imgui.dir/third_party/imgui/backends/imgui_impl_glfw.cpp.obj"
+},
+{
+  "directory": "C:/project/Graphics/VulkanTriangle/build",
+  "command": "C:\\msys64\\mingw64\\bin\\clang++.exe  -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui\\backends -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\glfw\\include -isystem C:\\VulkanSDK\\1.4.357.0\\include -std=gnu++20 -o CMakeFiles\\imgui.dir\\third_party\\imgui\\backends\\imgui_impl_vulkan.cpp.obj -c C:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui\\backends\\imgui_impl_vulkan.cpp",
+  "file": "C:/project/Graphics/VulkanTriangle/third_party/imgui/backends/imgui_impl_vulkan.cpp",
+  "output": "CMakeFiles/imgui.dir/third_party/imgui/backends/imgui_impl_vulkan.cpp.obj"
+},
+{
+  "directory": "C:/project/Graphics/VulkanTriangle/build",
+  "command": "C:\\msys64\\mingw64\\bin\\clang++.exe -DGLFW_STATIC -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui\\backends -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\glfw\\include -IC:\\project\\Graphics\\VulkanTriangle\\src -isystem C:\\VulkanSDK\\1.4.357.0\\include -std=gnu++20 -o CMakeFiles\\VulkanTriangle.dir\\src\\main.cpp.obj -c C:\\project\\Graphics\\VulkanTriangle\\src\\main.cpp",
+  "file": "C:/project/Graphics/VulkanTriangle/src/main.cpp",
+  "output": "CMakeFiles/VulkanTriangle.dir/src/main.cpp.obj"
+},
+{
+  "directory": "C:/project/Graphics/VulkanTriangle/build",
+  "command": "C:\\msys64\\mingw64\\bin\\clang++.exe -DGLFW_STATIC -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui\\backends -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\glfw\\include -IC:\\project\\Graphics\\VulkanTriangle\\src -isystem C:\\VulkanSDK\\1.4.357.0\\include -std=gnu++20 -o CMakeFiles\\VulkanTriangle.dir\\src\\VulkanManager\\VulkanManager.cpp.obj -c C:\\project\\Graphics\\VulkanTriangle\\src\\VulkanManager\\VulkanManager.cpp",
+  "file": "C:/project/Graphics/VulkanTriangle/src/VulkanManager/VulkanManager.cpp",
+  "output": "CMakeFiles/VulkanTriangle.dir/src/VulkanManager/VulkanManager.cpp.obj"
+},
+{
+  "directory": "C:/project/Graphics/VulkanTriangle/build",
+  "command": "C:\\msys64\\mingw64\\bin\\clang++.exe -DGLFW_STATIC -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui\\backends -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\glfw\\include -IC:\\project\\Graphics\\VulkanTriangle\\src -isystem C:\\VulkanSDK\\1.4.357.0\\include -std=gnu++20 -o CMakeFiles\\VulkanTriangle.dir\\src\\Core\\window.cpp.obj -c C:\\project\\Graphics\\VulkanTriangle\\src\\Core\\window.cpp",
+  "file": "C:/project/Graphics/VulkanTriangle/src/Core/window.cpp",
+  "output": "CMakeFiles/VulkanTriangle.dir/src/Core/window.cpp.obj"
+},
+{
+  "directory": "C:/project/Graphics/VulkanTriangle/build",
+  "command": "C:\\msys64\\mingw64\\bin\\clang++.exe -DGLFW_STATIC -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\imgui\\backends -IC:\\project\\Graphics\\VulkanTriangle\\third_party\\glfw\\include -IC:\\project\\Graphics\\VulkanTriangle\\src -isystem C:\\VulkanSDK\\1.4.357.0\\include -std=gnu++20 -o CMakeFiles\\VulkanTriangle.dir\\src\\ECS\\TransformComponents.cpp.obj -c C:\\project\\Graphics\\VulkanTriangle\\src\\ECS\\TransformComponents.cpp",
+  "file": "C:/project/Graphics/VulkanTriangle/src/ECS/TransformComponents.cpp",
+  "output": "CMakeFiles/VulkanTriangle.dir/src/ECS/TransformComponents.cpp.obj"
+}
+]

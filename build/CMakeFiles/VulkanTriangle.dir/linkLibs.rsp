@@ -1,0 +1,1 @@
+ libimgui.a "C:/VulkanSDK/1.4.357.0/Lib/vulkan-1.lib" -lglfw3 -lgdi32 -luser32 -lkernel32 -lshell32 -limm32 -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 

@@ -1,0 +1,94 @@
+
+cmake_minimum_required(VERSION 3.20)
+project(VulkanTriangle LANGUAGES CXX)
+
+# Включаем стандарт C++20 (крайне рекомендуется для DOD и Vulkan)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_USE_RESPONSE_FILE_FOR_INCLUDES OFF)
+set(CMAKE_C_USE_RESPONSE_FILE_FOR_INCLUDES OFF)
+
+set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui")
+
+set(IMGUI_SOURCES
+    ${IMGUI_DIR}/imgui.cpp
+    ${IMGUI_DIR}/imgui_demo.cpp
+    ${IMGUI_DIR}/imgui_draw.cpp
+    ${IMGUI_DIR}/imgui_tables.cpp
+    ${IMGUI_DIR}/imgui_widgets.cpp
+    # Указываем путь в папку backends
+    ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp
+)
+add_library(imgui STATIC ${IMGUI_SOURCES})
+
+
+target_include_directories(imgui PUBLIC 
+    ${IMGUI_DIR}
+    ${IMGUI_DIR}/backends 
+)
+
+# 4. Подключаем заголовочные файлы (Инклуды)
+target_include_directories(imgui PRIVATE 
+    ${Vulkan_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/glfw/include
+)
+
+# 1. Находим Vulkan SDK (он установлен в систему, его CMake найдёт сам)
+find_package(Vulkan REQUIRED)
+
+# 2. Находим GLM (оставляем как у тебя было, если он в системе / vcpkg)
+find_package(glm CONFIG REQUIRED)
+
+# 3. Создаем исполняемый файл и прописываем все твои исходники
+add_executable(${PROJECT_NAME} 
+    src/main.cpp
+    src/VulkanManager/VulkanManager.cpp
+    src/Core/ImGuiLayer/ImGuiLayer.cpp
+    src/Core/window.cpp
+    src/ECS/TransformComponents.cpp
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+target_include_directories(${PROJECT_NAME} PUBLIC 
+    ${IMGUI_DIR}
+    ${IMGUI_DIR}/backends
+)
+
+# 4. Подключаем заголовочные файлы (Инклуды)
+target_include_directories(${PROJECT_NAME} PRIVATE 
+    ${Vulkan_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/glfw/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    # Указываем путь к твоей локальной папке GLFW
+    ${IMGUI_DIR}
+    ${IMGUI_DIR}/backends
+)
+
+
+
+# 5. Указываем CMake, где искать сам файл библиотеки GLFW (.a или .lib)
+# Говорим компилятору, что используем статическую версию GLFW
+target_compile_definitions(${PROJECT_NAME} PRIVATE GLFW_STATIC)
+
+
+# Линкуем библиотеки (обрати внимание на новые системные либы в конце)
+target_link_libraries(${PROJECT_NAME} PRIVATE 
+    imgui
+    Vulkan::Vulkan
+    glm::glm
+    glfw3          # Наша статическая либа libglfw3.a из папки lib-mingw-w64
+    gdi32          # Системные библиотеки Windows для отрисовки окон
+    user32 
+    kernel32
+    shell32        # Добавлено для статической линковки GLFW
+    imm32          # Добавлено для статической линковки GLFW
+)
+target_link_libraries(imgui PRIVATE 
+    Vulkan::Vulkan
+    glfw3
+)

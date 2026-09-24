@@ -1,0 +1,4 @@
+C:/project/Graphics/VulkanTriangle/build/CMakeFiles/imgui.dir
+C:/project/Graphics/VulkanTriangle/build/CMakeFiles/VulkanTriangle.dir
+C:/project/Graphics/VulkanTriangle/build/CMakeFiles/edit_cache.dir
+C:/project/Graphics/VulkanTriangle/build/CMakeFiles/rebuild_cache.dir

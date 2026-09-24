@@ -1,0 +1,2 @@
+C:\PROGRA~1\LLVM\bin\llvm-ar.exe qc libimgui.a CMakeFiles/imgui.dir/third_party/imgui/imgui.cpp.obj CMakeFiles/imgui.dir/third_party/imgui/imgui_demo.cpp.obj CMakeFiles/imgui.dir/third_party/imgui/imgui_draw.cpp.obj CMakeFiles/imgui.dir/third_party/imgui/imgui_tables.cpp.obj CMakeFiles/imgui.dir/third_party/imgui/imgui_widgets.cpp.obj CMakeFiles/imgui.dir/third_party/imgui/backends/imgui_impl_glfw.cpp.obj CMakeFiles/imgui.dir/third_party/imgui/backends/imgui_impl_vulkan.cpp.obj
+C:\PROGRA~1\LLVM\bin\LLVM-R~1.EXE libimgui.a
