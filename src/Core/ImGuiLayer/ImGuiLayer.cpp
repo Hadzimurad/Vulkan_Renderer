@@ -67,7 +67,6 @@ void GuiLayer::Init(GLFWwindow* window, VulkanGUICreateInfo imGuiInfo) {
     ImGui_ImplVulkan_Init(&init_info);
     
 
-    ImGui_ImplVulkan_CreateFontsTexture();
     
 }
 
@@ -100,5 +99,5 @@ void GuiLayer::Shutdown() {
 }
 
 GuiLayer::~GuiLayer() {
-    this->Shutdown();
+    //this->Shutdown();
 }

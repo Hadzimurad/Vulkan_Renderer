@@ -187,7 +187,7 @@ VkShaderModule VulkanContext::createShaderModule(VkDevice device, const std::vec
 }
 
 
-void VulkanContext::recordCommandBuffer(const World& world, uint32_t imageIndex, GuiLayer imgui) {
+void VulkanContext::recordCommandBuffer(const World& world, uint32_t imageIndex, GuiLayer& imgui) {
     // Начало записи буфера
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -210,6 +210,9 @@ void VulkanContext::recordCommandBuffer(const World& world, uint32_t imageIndex,
 
     // 1. Начинаем проход рендеринга (в этот момент видеокарта очистит экран)
     vkCmdBeginRenderPass(currentCommandBuffer_m, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    if (m_pipeline.graphicsHandle == VK_NULL_HANDLE) {
+        throw std::runtime_error("pipeline is Nulled");
+    }
 
     // 2. Привязываем наш скомпилированный графический конвейер со всеми шейдерами
     vkCmdBindPipeline(currentCommandBuffer_m, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.graphicsHandle);
@@ -677,8 +680,7 @@ int VulkanContext::init_vulkan_core(Window& window_vulkan) {
 
     VkPipeline graphicsPipeline;
     if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
-        std::cerr << "[ERROR] Failed to create graphics pipeline!" << std::endl << std::flush;
-        return -1;
+        throw std::runtime_error("[ERROR] Failed to create graphics pipeline!");
     }
     m_pipeline.graphicsHandle = graphicsPipeline;
 
@@ -770,7 +772,7 @@ int VulkanContext::init_vulkan_core(Window& window_vulkan) {
 }
 
 
-void VulkanContext::draw_frame(const World& world, GuiLayer imgui) {
+void VulkanContext::draw_frame(const World& world, GuiLayer& imgui) {
     // 1. Запрашиваем индекс следующего доступного изображения из Swapchain
     uint32_t imageIndex;
     vkAcquireNextImageKHR(device_m, m_swapChain.handle, UINT64_MAX, m_sync.imageAvailable, VK_NULL_HANDLE, &imageIndex);
@@ -778,7 +780,6 @@ void VulkanContext::draw_frame(const World& world, GuiLayer imgui) {
     // Перезаписываем командный буфер под фреймбуфер текущего кадра
     vkResetCommandBuffer(currentCommandBuffer_m, 0);
     recordCommandBuffer(world, imageIndex, imgui);
- 
     // 2. Отправляем буфер команд на выполнение в графическую очередь (GPU)
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

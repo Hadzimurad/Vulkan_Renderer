@@ -15,7 +15,7 @@ int main() {
         World world;
         GuiLayer imgui{};
         VulkanGUICreateInfo guiCreateInfo{};
-
+        
         //Инициализация структуры для GUI(ImGui)
         vulkan.fillInitGUIStruct(guiCreateInfo);
         imgui.Init(window.get_window(), std::move(guiCreateInfo));

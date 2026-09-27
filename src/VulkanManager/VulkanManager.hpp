@@ -26,7 +26,7 @@ const std::vector<const char*> validationLayers = {
 class VulkanContext {
 public:
     int init_vulkan_core(Window& window_vulkan);
-    void draw_frame(const World& world, GuiLayer imgui);
+    void draw_frame(const World& world, GuiLayer& imgui);
     void cleanup();
     // 2. Метод создания буфера и заливки данных вершин
     void createVertexBuffer(const std::vector<Vertex> vertices);
@@ -78,7 +78,7 @@ private:
     // Создание шейдерного модуля
     VkShaderModule createShaderModule(VkDevice device, const std::vector<char>& code);
     // Запсить команд в командный буфер
-    void recordCommandBuffer(const World& world, uint32_t imageIndex, GuiLayer imgui);
+    void recordCommandBuffer(const World& world, uint32_t imageIndex, GuiLayer& imgui);
     // Помошник для поиска памяти типа памяти на GPU
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 };

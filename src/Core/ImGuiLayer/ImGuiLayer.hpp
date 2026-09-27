@@ -14,7 +14,9 @@ public:
     
     //Начало нового кадра, вызывается в начале цикла отрисовки
     void BeginFrame();
-    
+    // ЗАПРЕЩАЕМ КОПИРОВАНИЕ И ПРИСВАИВАНИЕ
+    GuiLayer(const GuiLayer&) = delete;
+    GuiLayer& operator=(const GuiLayer&) = delete;
     // Конец кадра и генерация вершин, вызывается после того, как описали Gui
     void EndFrame();
     
