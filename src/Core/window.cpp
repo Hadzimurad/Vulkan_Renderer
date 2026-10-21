@@ -1,19 +1,22 @@
 #include "window.hpp"
+#include "LogError/LogError.hpp"
 #include <GLFW/glfw3.h>
-#include <stdexcept>
+#include <cstdint>
 
-Window::Window() {
-    if (!glfwInit()) {
-        throw std::runtime_error("Failed to init glfw");
-    } 
+Window::Window(const uint32_t width, const uint32_t height) : m_width(width), m_height(height) {
+    if (width == 0 && height == 0 || !glfwInit()) {
+        LOG("Failed to init glfw");
+        return;
+    }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Vulkan DOD Engine", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(width, height, "Vulkan DOD Engine", nullptr, nullptr);
     if (!window) {
         glfwTerminate();
-        throw std::runtime_error("Failed to init window");
+        LOG("Failed to init window");
+        return;
     } 
     m_window = window;
 
@@ -21,24 +24,12 @@ Window::Window() {
     if (!glfwExtensions) {
         glfwDestroyWindow(m_window); // Чистим окно
         glfwTerminate(); // Чистим GLFW
-        throw std::runtime_error("Failed to require GLFW instance extensions!");
+        LOG("Failed to require GLFW instance extensions!");
+        return;
     }
+    LOG("Widow created");
     return;
-
-    std::cout << "Widow created" << std::endl;
-
 }
-
-
-bool Window::CreateWindowSurface(VkInstance instance, VkSurfaceKHR* surface) {
-    if (glfwCreateWindowSurface(instance, m_window, nullptr, surface) != VK_SUCCESS) {
-        std::cerr << "Failed to create window surface!" << std::endl;
-        return 0; 
-    }
-    return 1;
-}
-
-bool Window::should_close() const { return glfwWindowShouldClose(m_window); }
 
 GLFWwindow* Window::get_window() { return m_window; }
 
@@ -46,7 +37,6 @@ uint32_t Window::get_ExtentionCount() { return glfwExtensionCount; }
 
 const char** Window::get_glfwExtention() { return glfwExtensions; }
 
-void Window::pollEvents() { glfwPollEvents(); }
 
 Window::~Window() {
     glfwDestroyWindow(m_window);

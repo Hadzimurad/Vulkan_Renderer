@@ -54,6 +54,7 @@ void GuiLayer::Init(GLFWwindow* window, VulkanGUICreateInfo imGuiInfo) {
     init_info.Instance = imGuiInfo.instance;
     init_info.PhysicalDevice = imGuiInfo.physicalDevice;
     init_info.Device = m_Device;
+    init_info.ApiVersion = VK_API_VERSION_1_2;
     init_info.QueueFamily = imGuiInfo.queueFamily;
     init_info.Queue = imGuiInfo.queue;
     init_info.PipelineCache = VK_NULL_HANDLE;
@@ -81,6 +82,14 @@ void GuiLayer::EndFrame() {
 }
 
 void GuiLayer::Render(VkCommandBuffer commandBuffer) {
+    ImDrawData* drawData = ImGui::GetDrawData();
+    
+    // ПРОВЕРКА: Если рисовать нечего (или кадр еще не обновился), 
+    // просто выходим, чтобы не передавать VK_NULL_HANDLE в Vulkan
+    if (!drawData || drawData->CmdListsCount == 0) {
+        //throw std::runtime_error("ERROR data is null"); 
+        return;
+    }
     // Эта функция сама запишет все VkCmdDraw для интерфейса
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 }

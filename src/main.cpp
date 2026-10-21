@@ -1,5 +1,4 @@
 #include "VulkanManager/VulkanManager.hpp"
-#include <exception>
 #include "ECS/TransformComponents.hpp"
 #include <memory>
 #include "ECS/World.hpp"
@@ -11,10 +10,10 @@ int main() {
     try {
         Window window{}; 
         VulkanContext vulkan;
-        if (!vulkan.init_vulkan_core(window)) return -1; 
-        World world;
         GuiLayer imgui{};
         VulkanGUICreateInfo guiCreateInfo{};
+        if (!vulkan.init_vulkan_core(window)) return -1; 
+        World world;
         
         //Инициализация структуры для GUI(ImGui)
         vulkan.fillInitGUIStruct(guiCreateInfo);

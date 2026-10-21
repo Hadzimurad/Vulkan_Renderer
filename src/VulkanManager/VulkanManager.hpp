@@ -1,31 +1,36 @@
 #pragma once
-#include "../Core/window.hpp"
-#include "../ECS/Components.hpp"
-#include "../ECS/TransformComponents.hpp"
+#include "Core/window.hpp"
+#include "ECS/Components.hpp"
+#include "ECS/TransformComponents.hpp"
 #include <glm/gtc/matrix_transform.hpp>
-#include "../ECS/World.hpp"
+#include "ECS/World.hpp"
 #include "Core/ImGuiLayer/ImGuiLayer.hpp"
-#include <stdexcept>
+#include "VkInitModules/VkInstanceModule/VkInstanceModule.hpp"
+#include "VkInitModules/VkDeviceModule/VkDeviceModule.hpp"
+#include "VkInitModules/VkRenderPassModule/VkRenderPassModule.hpp"
+#include "VkInitModules/VkSurfaceModule/VkSurfaceModule.hpp"
+#include "VkInitModules/VkSwapchainModule/VkSwapchainModule.hpp"
 #include "VulkanTypes.hpp"
-#include <vector>
-#include <string>
 #include <cstring>
-#include <memory>
-#include <set>
-#include <fstream>
 #include <glm/glm.hpp>
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
-
+// Используем явные коды ошибок вместо исключений
+enum FileResult {
+    FILE_SUCCESS = 0,
+    FILE_ERROR_OPEN,
+    FILE_ERROR_READ,
+    FILE_ERROR_BUFFER_TOO_SMALL
+};
 
 // Слои валидации — наш главный инструмент отладки в Vulkan
-const std::vector<const char*> validationLayers = {
-    "VK_LAYER_KHRONOS_validation"
-};
+//const std::vector<const char*> validationLayers = {
+//    "VK_LAYER_KHRONOS_validation"
+//};
 
 class VulkanContext {
 public:
-    int init_vulkan_core(Window& window_vulkan);
+    bool init_vulkan_core(Window& window_vulkan);
     void draw_frame(const World& world, GuiLayer& imgui);
     void cleanup();
     // 2. Метод создания буфера и заливки данных вершин
@@ -34,12 +39,19 @@ public:
     void createIndexBuffer(const std::vector<uint16_t> indices);
     void fillInitGUIStruct(VulkanGUICreateInfo& initImGuiStruct);
 private:
-    
+
+    VkInstanceModule    m_instance;
+    VkSurfaceModule     m_surface;
+    VkDeviceModule      m_device;
+    VkSwapchainModule   m_swapchain;
+    VkRenderPassModule  m_geometryRenderPass;
+    VkRenderPassModule  m_imGuiRenderPass;
+
     //Структуры для базовой инициализации
-    VkInstance       instance_m         = VK_NULL_HANDLE;
-    VkSurfaceKHR     surface_m          = VK_NULL_HANDLE;
-    VkPhysicalDevice physicalDevice_m   = VK_NULL_HANDLE;
-    VkDevice         device_m           = VK_NULL_HANDLE;
+    //VkInstance       instance_m         = VK_NULL_HANDLE;
+    //VkSurfaceKHR     surface_m          = VK_NULL_HANDLE;
+    //VkPhysicalDevice physicalDevice_m   = VK_NULL_HANDLE;
+    //VkDevice         device_m           = VK_NULL_HANDLE;
     VkCommandPool    commandPool_m      = VK_NULL_HANDLE;    
 
     //Командный буфер
@@ -54,27 +66,16 @@ private:
 
 
     // Структуры для организации кода
-    VulkanQueue          m_queue{};
-    VulkanSwapChain      m_swapChain{};
+    //VulkanQueue          m_queue{};
+    //VulkanSwapChain      m_swapChain{};
     VulkanPipeline       m_pipeline{};
     VulkanSyncPrimitives m_sync{};
 
 
 
-    // Нахождение очередей графики и презентации на GPU 
-    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
-    // Подтверждение поддержки свопчейна
-    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
-    // Формат пикселей, режим вывода и разрешение окна 
-    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-    VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
-    VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
-    // Поддержка портов очередей
-    bool isDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface);
-    // Проверка поддержки слоев валидации
-    bool checkValidationLayerSupport();
+    
     // Чтения файла шейдера в формате SPIR-V
-    std::vector<char> readFile(const std::string& filename);
+    FileResult readFile(const char* filepath, char* outBuffer, size_t bufferSize, size_t* outBytesRead);
     // Создание шейдерного модуля
     VkShaderModule createShaderModule(VkDevice device, const std::vector<char>& code);
     // Запсить команд в командный буфер

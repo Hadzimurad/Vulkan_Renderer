@@ -1,7 +1,16 @@
 #include "VulkanManager.hpp"
+#include <cmath>
+#include <cstddef>
+#include <cstdio>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 #include "Core/ImGuiLayer/ImGuiLayer.hpp"
+#include "LogError/LogError.hpp"
+#include "VkInitModules/VkInstanceModule/VkInstanceModule.hpp"
+#include "VkInitModules/VkSurfaceModule/VkSurfaceModule.hpp"
+#include "VkInitModules/VkDeviceModule/VkDeviceModule.hpp"
+#include "VkInitModules/VkSwapchainModule/VkSwapchainModule.hpp"
+#include "VkInitModules/VkRenderPassModule/VkRenderPassModule.hpp"
 
 #ifdef NDEBUG
     const bool enableValidationLayers = false;
@@ -9,166 +18,73 @@
     const bool enableValidationLayers = true;
 #endif
 
-void VulkanContext::fillInitGUIStruct(VulkanGUICreateInfo& GUIcreateInfo) {
-    GUIcreateInfo.renderPass = m_pipeline.renderPass;
-    GUIcreateInfo.instance = instance_m;
-    GUIcreateInfo.device = device_m;
-    GUIcreateInfo.physicalDevice = physicalDevice_m;
-    GUIcreateInfo.imageCount = m_swapChain.maxImageCount;
-    GUIcreateInfo.minImageCount = m_swapChain.minImageCount;
-    GUIcreateInfo.queue = m_queue.graphicsQueue; 
-    GUIcreateInfo.queueFamily = static_cast<uint32_t>(m_queue.indices.graphicsFamily);
-}
+// void VulkanContext::fillInitGUIStruct(VulkanGUICreateInfo& GUIcreateInfo) {
+//     GUIcreateInfo.renderPass = m_pipeline.renderPass;
+//     GUIcreateInfo.instance = instance_m;
+//     GUIcreateInfo.device = device_m;
+//     GUIcreateInfo.physicalDevice = physicalDevice_m;
+//     GUIcreateInfo.imageCount = m_swapChain.maxImageCount;
+//     GUIcreateInfo.minImageCount = m_swapChain.minImageCount;
+//     GUIcreateInfo.queue = m_queue.graphicsQueue; 
+//     GUIcreateInfo.queueFamily = static_cast<uint32_t>(m_queue.indices.graphicsFamily);
+// }
 
-QueueFamilyIndices VulkanContext::findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) {
-    QueueFamilyIndices indices;
 
-    uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
 
-    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
-    int i = 0;
-    for (const auto& queueFamily : queueFamilies) {
-        // Проверяем поддержку графики
-        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-            indices.graphicsFamily = i;
-            indices.hasGraphics = true;
-        }
 
-        // Проверяем поддержку вывода на экран (презентации)
-        VkBool32 presentSupport = false;
-        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-        if (presentSupport) {
-            indices.presentFamily = i;
-            indices.hasPresent = true;
-        }
 
-        if (indices.isComplete()) {
-            break;
-        }
-        i++;
-    }
-    
-    return indices;
-}
-
-SwapChainSupportDetails VulkanContext::querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) {
-    SwapChainSupportDetails details;
-
-    // 1. Получаем базовые возможности
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
-
-    // 2. Получаем поддерживаемые форматы
-    uint32_t formatCount;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
-    if (formatCount != 0) {
-        details.formats.resize(formatCount);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, details.formats.data());
+/**
+ * Читает файл в заранее выделенный пользователем буфер.
+ * Никаких std::string, std::vector или скрытых аллокаций.
+ */
+FileResult readFile(const char* filepath, char* outBuffer, size_t bufferSize, size_t* outBytesRead) {
+    if (!filepath || !outBuffer || bufferSize == 0) {
+        return FILE_ERROR_READ;
     }
 
-    // 3. Получаем режимы вывода
-    uint32_t presentModeCount;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
-    if (presentModeCount != 0) {
-        details.presentModes.resize(presentModeCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, details.presentModes.data());
+    // Используем классический Си-I/O
+    FILE* file = fopen(filepath, "rb");
+    if (!file) {
+        return FILE_ERROR_OPEN;
     }
 
-    return details;
-}
+    // Определяем размер файла (стандартный для Orthodox C++ способ без внешних библиотек)
+    // SEEK_END перетаскивает указатель файла в конец буфера
+    fseek(file, 0, SEEK_END);
+    // ftell возращает номер элемента под которым стоит наш указатель
+    // так как мы передвинули его с помощью SEEK_END он вернет номер после последнего элемента
+    long fileSize = ftell(file);
+    // возращаем указатель обратно
+    fseek(file, 0, SEEK_SET);
 
-// Выбираем формат пикселей. Идеально: BGRA 8-бит со стандартным цветовым пространством SRGB
-VkSurfaceFormatKHR VulkanContext::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
-    for (const auto& availableFormat : availableFormats) {
-        if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && 
-            availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-            return availableFormat;
-        }
-    }
-    return availableFormats[0]; // Если идеального нет, берем первый попавшийся
-}
-
-// Выбираем режим вывода. MAILBOX — это тройная буферизация (минимальный инпут-лаг, без разрывов)
-VkPresentModeKHR VulkanContext::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
-    for (const auto& availablePresentMode : availablePresentModes) {
-        if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-            return availablePresentMode; // Возвращаем тройную буферизацию, если она есть
-        }
-    }
-    return VK_PRESENT_MODE_FIFO_KHR; // FIFO есть ВСЕГДА — это стандартный V-Sync
-}
-
-// Выбираем разрешение кадров. Обычно это просто размер нашего окна GLFW (800x600)
-VkExtent2D VulkanContext::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities) {
-    if (capabilities.currentExtent.width != UINT32_MAX) {
-        return capabilities.currentExtent;
-    } else {
-        VkExtent2D actualExtent = {800, 600};
-        actualExtent.width = std::max(capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, actualExtent.width));
-        actualExtent.height = std::max(capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, actualExtent.height));
-        return actualExtent;
-    }
-}
-
-bool VulkanContext::isDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface) {
-    VkPhysicalDeviceProperties deviceProperties;
-    vkGetPhysicalDeviceProperties(device, &deviceProperties);
-
-    // КРИТИЧЕСКИ ВАЖНО: Проверяем, что видеокарта поддерживает версию 1.2
-    if (deviceProperties.apiVersion < VK_API_VERSION_1_2) {
-        return false;
+    if (fileSize < 0) {
+        fclose(file);
+        return FILE_ERROR_READ;
     }
 
-    QueueFamilyIndices indices = findQueueFamilies(device, surface);
-
-    // Для GTX 660 нам важно, чтобы это была дискретная видеокарта (DISCRETE_GPU)
-    return indices.isComplete() && deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
-}
-
-// Проверка поддержки слоев валидации
-bool VulkanContext::checkValidationLayerSupport() {
-    uint32_t layerCount;
-    // Получаем все доступные слои
-    vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-
-    // Массив в котором все доступные на GPU слои
-    std::vector<VkLayerProperties> availableLayers(layerCount);
-    // Тут он иницализируется названиями доступных слоев
-    vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-
-
-    // Ищем все нужные слои в validationLayers если хотя бы одного нет return false
-    for (const char* layerName : validationLayers) {
-        bool layerFound = false;
-        for (const auto& layerProperties : availableLayers) {
-            // сравниваем строки если равны return 0;
-            if (strcmp(layerName, layerProperties.layerName) == 0) {
-                layerFound = true;
-                break;
-            }
-        }
-        if (!layerFound) return false;
-    }
-    return true;
-}
-
-std::vector<char> VulkanContext::readFile(const std::string& filename) {
-    std::ifstream file(filename, std::ios::ate | std::ios::binary);
-
-    if (!file.is_open()) {
-        throw std::runtime_error("failed to open file: " + filename);
+    // Проверяем, поместится ли файл в буфер (учитываем +1 для нуль-терминатора, если это текст)
+    if ((size_t)fileSize >= bufferSize) {
+        fclose(file);
+        return FILE_ERROR_BUFFER_TOO_SMALL;
     }
 
-    size_t fileSize = (size_t) file.tellg();
-    std::vector<char> buffer(fileSize);
+    // Прямое чтение в буфер fread возвращает кол-во успешно прочитанных элементов
+    size_t bytesRead = fread(outBuffer, 1, (size_t)fileSize, file);
+    fclose(file); // Явное закрытие, никакого RAII/деструкторов для файлов
 
-    file.seekg(0);
-    file.read(buffer.data(), fileSize);
-    file.close();
+    if (bytesRead != (size_t)fileSize) {
+        return FILE_ERROR_READ;
+    }
 
-    return buffer;
+    // Гарантируем нуль-терминатор, если буфер используется как C-строка
+    outBuffer[bytesRead] = '\0'; 
+
+    if (outBytesRead) {
+        *outBytesRead = bytesRead;
+    }
+
+    return FILE_SUCCESS;
 }
 
 
@@ -213,17 +129,17 @@ void VulkanContext::recordCommandBuffer(const World& world, uint32_t imageIndex,
     if (m_pipeline.graphicsHandle == VK_NULL_HANDLE) {
         throw std::runtime_error("pipeline is Nulled");
     }
-
+    std::cerr << "Try Bind Pipeline...\n";
     // 2. Привязываем наш скомпилированный графический конвейер со всеми шейдерами
     vkCmdBindPipeline(currentCommandBuffer_m, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline.graphicsHandle);
-
+    std::cerr << "Pipeline is Binded\n";
+    
     // Матрица вида
     glm::mat4 view = glm::lookAt(
         glm::vec3(0.0f, 0.0f, 3.0f),  // Положение камеры в мире
         glm::vec3(0.0f, 0.0f, 0.0f),  // Куда камера смотрит (центр сцены)
         glm::vec3(0.0f, -1.0f, 0.0f)   // Направление "вверх" для камеры
     );
-
     // Матрица перспективы
     Perspective_p p{};
     glm::mat4 proj = p.createPespective();
@@ -266,10 +182,31 @@ void VulkanContext::recordCommandBuffer(const World& world, uint32_t imageIndex,
         // 3. САМАЯ ГЛАВНАЯ КОМАНДА: Рисуем! 
         // Параметры: 3 вершины, 1 инстанс, первая вершина с индексом 0, первый инстанс 0.
         vkCmdDrawIndexed(currentCommandBuffer_m, 6, 1, 0, 0, 0); 
-    } 
-    imgui.Render(currentCommandBuffer_m);   
+    }
+    
+    //std::cerr << "This?\n\n";
+    //imgui.Render(currentCommandBuffer_m);
+    //std::cerr << "IMGUI render is successfully\n";
     // Конец прохода рендеринга
     vkCmdEndRenderPass(currentCommandBuffer_m);
+
+
+    // ==== 2. ОТДЕЛЬНЫЙ ПРОХОД ДЛЯ IMGUI ====
+    // Копируем настройки прохода
+    VkRenderPassBeginInfo imguiRenderPassInfo = renderPassInfo;
+    
+    // Зануляем Clear-значения, чтобы повторный вызов Render Pass не стёр треугольник
+    //imguiRenderPassInfo.clearValueCount = 0; 
+    //imguiRenderPassInfo.pClearValues = nullptr;
+    // Открываем точно такой же проход второй раз, но уже с чистым графическим стейтом
+    vkCmdBeginRenderPass(currentCommandBuffer_m, &imguiRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        
+    std::cerr << "This?\n\n";
+    imgui.Render(currentCommandBuffer_m); 
+    std::cerr << "IMGUI render is successfully\n";
+
+    // Закрываем проход ImGui
+    vkCmdEndRenderPass(currentCommandBuffer_m); 
 
     // Завершаем запись буфера
     if (vkEndCommandBuffer(currentCommandBuffer_m) != VK_SUCCESS) {
@@ -278,281 +215,61 @@ void VulkanContext::recordCommandBuffer(const World& world, uint32_t imageIndex,
 }
 
 
-int VulkanContext::init_vulkan_core(Window& window_vulkan) { 
-
-    VkApplicationInfo appInfo{};
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "DOD Engine";
-    appInfo.apiVersion = VK_API_VERSION_1_2; 
-
-    VkInstanceCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    createInfo.pApplicationInfo = &appInfo;
+bool VulkanContext::init_vulkan_core(Window& window_vulkan) { 
+    // 1. Создаем Инстанс для инициализации и контекста
     
-    createInfo.enabledExtensionCount = window_vulkan.get_ExtentionCount();
-    createInfo.ppEnabledExtensionNames = window_vulkan.get_glfwExtention();
-
-    if (enableValidationLayers) {
-        if (!checkValidationLayerSupport()) return -1;
-        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-        createInfo.ppEnabledLayerNames = validationLayers.data();
+    if (!m_instance.Init(enableValidationLayers, 
+        window_vulkan.get_ExtentionCount(),
+        window_vulkan.get_glfwExtention())) { 
+        LOG_ERROR("[ERROR] Failed to init Insatnce");
+        return false;
     }
     
-    
-    VkInstance instance{};
-    if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
-        std::cerr << "Failed to create instance!" << std::endl;
-        return -1;
-    }
-    instance_m = instance;
-
-
-    // 1. Создаем Поверхность (Surface) для связи Vulkan и окна ОС
-    VkSurfaceKHR surface{};
-    if (!window_vulkan.CreateWindowSurface(instance, &surface)) return -1; 
-    surface_m = surface;
-
-    // 2. Выбор Физического Устройства (Видеокарты)
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-    uint32_t deviceCount = 0;
-    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
-
-    if (deviceCount == 0) {
-        std::cerr << "Failed to find GPUs with Vulkan support!" << std::endl;
-        return -1;
+    // 2. Создаем Поверхность (Surface) для связи Vulkan и окна ОС
+    if (!m_surface.Init(m_instance.get_instance(), window_vulkan.get_window())) {
+        LOG_ERROR("[ERROR] Failed to init Surface!");
+        return false;
     }
 
-    std::vector<VkPhysicalDevice> devices(deviceCount);
-    vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
-
-    for (const auto& device : devices) {
-        if (isDeviceSuitable(device, surface)) {
-            physicalDevice = device;
-            break;
-        }
+    // 3. Запрашиваем физическое устройство и Создаем логическое устройство
+    if (!m_device.Init(m_instance.get_instance(), m_surface.get_surface())) {
+        LOG_ERROR("[ERROR] Failed to init Device!");
+        return false;
     }
 
-    if (physicalDevice == VK_NULL_HANDLE) {
-        std::cerr << "Failed to find a suitable GPU (GTX 660 or equivalent with Vulkan 1.2)!" << std::endl;
-        return -1;
+    LOG("[LOG 1] Queues fetched. Querying swapchain support...\n");
+
+    // 4. Создаем Swapchain и с его помощью imageView
+    if (!m_swapchain.init(m_device.get_physical_device(), m_device.get_device(), m_surface.get_surface(), 800, 600)) {
+        LOG_ERROR("[ERROR] Failed to init Swapchain!");
+        return false;
     }
 
-    // Выведем имя нашей видеокарты, чтобы убедиться, что выбралась GTX 660
-    VkPhysicalDeviceProperties deviceProperties;
-    vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
-    std::cout << "Selected GPU: " << deviceProperties.deviceName << std::endl;
-    physicalDevice_m = physicalDevice;
+    LOG("[LOG 6.1] Creating Render Pass...");
 
-    // 3. Создание Логического Устройства (VkDevice)
-    QueueFamilyIndices indices = findQueueFamilies(physicalDevice, surface);
-
-    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    std::set<uint32_t> uniqueQueueFamilies = { 
-        static_cast<uint32_t>(indices.graphicsFamily),
-        static_cast<uint32_t>(indices.presentFamily)
-    };
-
-    float queuePriority = 1.0f; // Приоритет очереди (от 0.0 до 1.0)
-    for (uint32_t queueFamily : uniqueQueueFamilies) {
-        VkDeviceQueueCreateInfo queueCreateInfo{};
-        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        queueCreateInfo.queueFamilyIndex = queueFamily;
-        queueCreateInfo.queueCount = 1;
-        queueCreateInfo.pQueuePriorities = &queuePriority;
-        queueCreateInfos.push_back(queueCreateInfo);
+    if (!m_geometryRenderPass.Init(m_device.get_device(), m_swapchain.get_surfaceFormat().format, RenderPassType::Geometry3D)) { 
+        LOG("[ERROR] Failed to init Geometry Render Pass!");
+        return false;
     }
 
-    // Описываем фичи геометрии, которые нам пригодятся (например, анизотропная фильтрация)
-    VkPhysicalDeviceFeatures deviceFeatures{};
-    deviceFeatures.samplerAnisotropy = VK_TRUE; 
-
-    const std::vector<const char*> deviceExtensions = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME // Это макрос для строки "VK_KHR_swapchain"
-    };
-
-    VkDeviceCreateInfo deviceCreateInfo{};
-    deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
-    deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
-    deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
-
-    // ВАЖНЕЙШЕЕ ИСПРАВЛЕНИЕ: Включаем расширение Swapchain на уровне железа!
-    deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
-    deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
-
-    // В современных версиях Vulkan устройство не требует слоев, но для старых драйверов укажем 
-    deviceCreateInfo.enabledLayerCount = 0;
-    deviceCreateInfo.ppEnabledLayerNames = nullptr;
-    
-
-    VkDevice device;
-    if (vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device) != VK_SUCCESS) {
-        std::cerr << "Failed to create logical device!" << std::endl;
-        return -1;
+    if (!m_imGuiRenderPass.Init(m_device.get_device(), m_swapchain.get_surfaceFormat().format, RenderPassType::ImGuiUI)) {
+        LOG("[ERROR] Failed to init ImGui Render Pass!");
+        return false;
     }
-    device_m = device;
 
-    // Получаем хэндлы (указатели) на сами очереди, куда мы будем слать команды
-    VkQueue graphicsQueue;
-    VkQueue presentQueue;
-    vkGetDeviceQueue(device, indices.graphicsFamily, 0, &graphicsQueue);
-    vkGetDeviceQueue(device, indices.presentFamily, 0, &presentQueue);
+    m_swapchain.createFramebuffers(m_geometryRenderPass.get_render_pass());
 
-    m_queue.graphicsQueue = graphicsQueue;
-    m_queue.presentQueue = presentQueue;
-
-    std::cout << "[LOG 1] Queues fetched. Querying swapchain support..." << std::endl << std::flush;
-    SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice, surface);
-    
-    
-    
-    VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
-    VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
-    VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
-    m_swapChain.extent = extent;
-    std::cout << "[LOG 2] Chosen Format: " << surfaceFormat.format << ", Mode: " << presentMode << std::endl << std::flush;
-
-    // Зануляем количество картинок до минимума для теста стабильности
-    m_swapChain.minImageCount = swapChainSupport.capabilities.minImageCount;
-
-    m_swapChain.maxImageCount = swapChainSupport.capabilities.minImageCount + 1;
-    std::cout << "[LOG 3] Requested Image Count: " << m_swapChain.maxImageCount << std::endl << std::flush;
-
-    VkSwapchainCreateInfoKHR swapchainCreateInfo{};
-    swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    swapchainCreateInfo.pNext = nullptr;
-    swapchainCreateInfo.flags = 0;
-    swapchainCreateInfo.surface = surface;
-    swapchainCreateInfo.minImageCount = m_swapChain.maxImageCount; // Минимально возможная двойная буферизация
-    swapchainCreateInfo.imageFormat = surfaceFormat.format; // Должно быть 50 (B8G8R8A8_SRGB)
-    swapchainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
-    swapchainCreateInfo.imageExtent = extent;
-    swapchainCreateInfo.imageArrayLayers = 1;
-    swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-    swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    swapchainCreateInfo.queueFamilyIndexCount = 0;
-    swapchainCreateInfo.pQueueFamilyIndices = nullptr;
-
-    swapchainCreateInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR; // Мы проверили, тут честная 1
-    
-    // ИСПРАВЛЕНИЕ: Пробуем INHERIT вместо OPAQUE на случай конфликта с темами Windows
-    swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR; 
-    
-    swapchainCreateInfo.presentMode = presentMode;
-    swapchainCreateInfo.clipped = VK_TRUE;
-    swapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
-
-    std::cout << "[LOG 4] Calling vkCreateSwapchainKHR with Hardcoded Extent (800x600)..." << std::endl << std::flush;
-    
-    VkSwapchainKHR swapChain; 
-    if (vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &swapChain) != VK_SUCCESS) {
-        std::cerr << "[ERROR] vkCreateSwapchainKHR failed" << std::endl << std::flush;
-        return -1;
-    }
-    m_swapChain.handle = swapChain;
-
-    
-
-    std::cout << "[LOG 5] Swapchain created. Fetching images..." << std::endl << std::flush;
-    uint32_t swapChainImageCount;
-    vkGetSwapchainImagesKHR(device, swapChain, &swapChainImageCount, nullptr);
-    std::vector<VkImage> swapChainImages(swapChainImageCount);
-    vkGetSwapchainImagesKHR(device, swapChain, &swapChainImageCount, swapChainImages.data());
-    m_swapChain.images = swapChainImages;
-
-    std::cout << "[LOG 6] Images fetched: " << swapChainImages.size() << ". Entering main loop..." << std::endl << std::flush;
-
-    std::cout << "[LOG 6.1] Creating Image Views..." << std::endl << std::flush;
-
-    // Вектор, где мы будем хранить хэндлы наших представлений
-    std::vector<VkImageView> swapChainImageViews(swapChainImages.size());
-
-    for (size_t i = 0; i < swapChainImages.size(); i++) {
-        VkImageViewCreateInfo viewCreateInfo{};
-        viewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        viewCreateInfo.image = swapChainImages[i]; // Привязываем к конкретной картинке из свопчейна
-        viewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D; // Трактуем как обычную 2D текстуру
-        viewCreateInfo.format = surfaceFormat.format;    // Формат должен строго совпадать (наш 50-й формат)
-
-        // Позволяет перенаправлять каналы цвета (например, сделать текстуру монохромной). Нам это не нужно.
-        viewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-        viewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-        viewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-        viewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-        
-        // Описываем, какая часть изображения нам нужна (актуально для текстурных атласов и мип-маппинга)
-        viewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT; // Работаем с цветом
-        viewCreateInfo.subresourceRange.baseMipLevel = 0;  // Мип-уровни не используем
-        viewCreateInfo.subresourceRange.levelCount = 1;
-        viewCreateInfo.subresourceRange.baseArrayLayer = 0; // Слои массива не используем
-        viewCreateInfo.subresourceRange.layerCount = 1;
-
-        if (vkCreateImageView(device, &viewCreateInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
-            std::cerr << "[ERROR] Failed to create image view for index " << i << std::endl << std::flush;
-            return -1;
-        }
-
-    }
-    m_swapChain.imageViews = swapChainImageViews;
-    
-    std::cout << "[LOG 6.2] All Image Views created successfully!" << std::endl << std::flush;
-
-    std::cout << "[LOG 6.3] Creating Render Pass..." << std::endl << std::flush;
-
-    // Описываем наш единственный буфер цвета (картинку свопчейна)
-    VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = surfaceFormat.format; // Формат пикселей (50)
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT; // Без сглаживания (MSAA)
-
-    // Действие при старте прохода: ОЧИЩАТЬ буфер (VK_ATTACHMENT_LOAD_OP_CLEAR)
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    
-    // Действие в конце прохода: СОХРАНЯТЬ пиксели в памяти (VK_ATTACHMENT_STORE_OP_STORE)
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE; 
-
-    // С буфером трафарета (stencil) мы ничего не делаем
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-    // Vulkan нужно знать топологию памяти картинки до и после рендера:
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;     // До рендера нам плевать, что там было
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // После рендера картинка должна быть готова к выводу на экран
-
-    // Ссылка на наше описание (под-проходы рендеринга используют индексы)
-    VkAttachmentReference colorAttachmentRef{};
-    colorAttachmentRef.attachment = 0; // Наш colorAttachment будет под нулевым индексом
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; // Во время рендера используем оптимальный режим для цвета
-
-    // Создаем под-проход (Subpass). У нас простая сцена, поэтому под-проход всего один
-    VkSubpassDescription subpass{};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS; // Это графический под-проход, а не вычислительный
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentRef;
-
-    // Собираем сам Render Pass
-    VkRenderPassCreateInfo renderPassInfo{};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.attachmentCount = 1;
-    renderPassInfo.pAttachments = &colorAttachment;
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpass;
-
-    VkRenderPass renderPass;
-    if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
-        std::cerr << "[ERROR] Failed to create Render Pass!" << std::endl << std::flush;
-        return -1;
-    }
-    m_pipeline.renderPass = renderPass;
-    std::cout << "[LOG 6.4] Render Pass created successfully!" << std::endl << std::flush;
-
-
-    std::cout << "[LOG 6.5] Compiling Graphics Pipeline..." << std::endl << std::flush;
+    LOG("[LOG 6.4] Render Pass created successfully!");
+    LOG("[LOG 6.5] Compiling Graphics Pipeline...");
 
     // 1. Загружаем откомпилированные SPIR-V файлы
-    // Внимание: укажи правильный относительный путь от места запуска .exe файла к .spv
-    std::vector<char> vertShaderCode = readFile("../shaders/vert.spv");
-    std::vector<char> fragShaderCode = readFile("../shaders/frag.spv");
+    // Внимание: нужен правильный относительный путь от места запуска .exe файла к .spv
+    char staticBufferVert[1024];
+    size_t bytesReadVert = 0;
+    FileResult resultVert = readFile("../shaders/vert.spv", staticBufferVert, sizeof(staticBufferVert), &bytesReadVert);
+    char staticBufferFrag[1024];
+    size_t bytesReadFrag = 0;
+    FileResult resultFrag = readFile("../shaders/frag.spv", staticBufferFrag, sizeof(staticBufferFrag), &bytesReadFrag);
 
     VkShaderModule vertShaderModule = createShaderModule(device, vertShaderCode);
     VkShaderModule fragShaderModule = createShaderModule(device, fragShaderCode);

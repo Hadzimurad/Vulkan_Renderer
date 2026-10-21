@@ -16,43 +16,6 @@ struct VulkanGUICreateInfo {
     uint32_t imageCount;
 };
 
-// Очереди
-struct QueueFamilyIndices {
-    uint32_t graphicsFamily;
-    uint32_t presentFamily;
-    bool hasGraphics = false;
-    bool hasPresent = false;
-
-    bool isComplete() {
-        return hasGraphics && hasPresent;
-    }
-};
-
-//Структура для хранения Очередей и их индексов
-struct VulkanQueue {
-    QueueFamilyIndices indices{};
-    VkQueue          graphicsQueue = VK_NULL_HANDLE;
-    VkQueue          presentQueue = VK_NULL_HANDLE;
-};
-
-// Детали SwapChain
-struct SwapChainSupportDetails {
-    VkSurfaceCapabilitiesKHR capabilities;
-    std::vector<VkSurfaceFormatKHR> formats;
-    std::vector<VkPresentModeKHR> presentModes;
-};
-
-// Сгруппированные ресурсы
-struct VulkanSwapChain {
-    VkSwapchainKHR handle = VK_NULL_HANDLE;
-    VkFormat imageFormat{};
-    VkExtent2D extent{};
-    std::vector<VkImage> images;
-    std::vector<VkImageView> imageViews;
-    std::vector<VkFramebuffer> framebuffers;
-    uint32_t minImageCount = 0;
-    uint32_t maxImageCount = 0;
-};
 
 struct VulkanPipeline {
     VkRenderPass renderPass = VK_NULL_HANDLE;
