@@ -26,7 +26,8 @@ QueueFamilyIndices VkDeviceModule::findQueueFamilies(VkPhysicalDevice device, Vk
     for (int i = 0; i < queueFamilyCount; ++i) {
         // Проверяем поддержку графики
         if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-            indices.graphicsFamily = i; 
+            indices.graphicsFamily = i;
+            m_graphicIndices = i;
         }
 
         // Проверяем поддержку вывода на экран (презентации)
@@ -34,6 +35,7 @@ QueueFamilyIndices VkDeviceModule::findQueueFamilies(VkPhysicalDevice device, Vk
         vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
         if (presentSupport) {
             indices.presentFamily = i;
+            m_presentIndices = i;
         }
 
         if (indices.isComplete()) {
@@ -164,9 +166,8 @@ bool VkDeviceModule::Init(VkInstance instance, VkSurfaceKHR surface) {
     
     return true;
 }
-
-VkDeviceModule::~VkDeviceModule() {
+void VkDeviceModule::cleanup() {
     if (m_device != VK_NULL_HANDLE) {
         vkDestroyDevice(m_device, nullptr);
-    }
+    }   
 }

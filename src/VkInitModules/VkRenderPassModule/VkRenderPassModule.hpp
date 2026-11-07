@@ -14,7 +14,8 @@ private:
 
 public:
     VkRenderPassModule() = default;
-    ~VkRenderPassModule();
+    ~VkRenderPassModule() = default;
+    void cleanup();
 
     // Запрет копирования
     VkRenderPassModule(const VkRenderPassModule&) = delete;

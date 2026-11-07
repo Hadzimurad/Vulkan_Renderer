@@ -1,5 +1,6 @@
 #pragma once
 #include <vulkan/vulkan.h>
+#include "LogError/LogError.hpp"
 
 // Очереди
 struct QueueFamilyIndices {
@@ -20,14 +21,16 @@ private:
 
     VkQueue m_graphicsQueue = VK_NULL_HANDLE;
     VkQueue m_presentQueue = VK_NULL_HANDLE;
-
+    uint32_t m_graphicIndices = 0XFFFFFFF;
+    uint32_t m_presentIndices = 0XFFFFFFF;
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
     bool isDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface);
 
 public:
 
     VkDeviceModule() = default;
-    ~VkDeviceModule();
+    ~VkDeviceModule() = default; 
+    void cleanup();
 
     // Запрет копирования
     VkDeviceModule(const VkDeviceModule&) = delete;
@@ -41,5 +44,14 @@ public:
     VkPhysicalDevice get_physical_device() const { return m_physicalDevice; }
     VkQueue          get_graphics_queue() const  { return m_graphicsQueue; }
     VkQueue          get_present_queue() const   { return m_presentQueue; }
+    uint32_t get_graphic_family_indices() const {
+        ASSERT(m_graphicIndices != 0XFFFFFFF, "Graphic Indices is NULL");
+        return m_graphicIndices;
+    }
+    uint32_t get_present_family_indices() const {
+        ASSERT(m_presentIndices != 0XFFFFFFF, "Present Indices is NULL");
+        return m_presentIndices;
+    }
+
     
 };

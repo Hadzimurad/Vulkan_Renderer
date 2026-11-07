@@ -17,17 +17,6 @@ struct VulkanGUICreateInfo {
 };
 
 
-struct VulkanPipeline {
-    VkRenderPass renderPass = VK_NULL_HANDLE;
-    VkPipelineLayout layout = VK_NULL_HANDLE;
-    VkPipeline graphicsHandle = VK_NULL_HANDLE;
-};
-
-struct VulkanSyncPrimitives {
-    VkSemaphore imageAvailable = VK_NULL_HANDLE;
-    VkSemaphore renderFinished = VK_NULL_HANDLE;
-};
-
 // Данные Вершины
 struct Vertex {
     glm::vec3 pos;
@@ -41,8 +30,8 @@ struct Vertex {
         return bindingDescription;
     }
 
-    static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
-        std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+    static void getAttributeDescriptions(VkVertexInputAttributeDescription* attributeDescriptions) {
+
         attributeDescriptions[0].binding = 0;
         attributeDescriptions[0].location = 0;
         attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -52,6 +41,5 @@ struct Vertex {
         attributeDescriptions[1].location = 1;
         attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
         attributeDescriptions[1].offset = offsetof(Vertex, color);
-        return attributeDescriptions;
     }
 };

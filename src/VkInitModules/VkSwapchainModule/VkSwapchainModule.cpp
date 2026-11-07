@@ -108,7 +108,7 @@ bool VkSwapchainModule::init(VkPhysicalDevice physicalDevice, VkDevice device,
     vkGetSwapchainImagesKHR(device, m_swapchain, &m_swapchainInfo.imageCount, nullptr);
 
     ASSERT(m_swapchainInfo.imageCount <= 8, "[ERROR] Swapchain allocated more than 8 images!");
-
+    LOG(" IMAGE %d", m_swapchainInfo.imageCount);
     vkGetSwapchainImagesKHR(device, m_swapchain, &m_swapchainInfo.imageCount, m_swapchainInfo.images);
 
     LOG("[LOG 5] Swapchain created. Fetching images...");
@@ -190,8 +190,7 @@ bool VkSwapchainModule::createFramebuffers(VkRenderPass renderPass) {
     return true;
 }
 
-
-VkSwapchainModule::~VkSwapchainModule() {
+void VkSwapchainModule::cleanup() {
     if (m_device != VK_NULL_HANDLE) {
         for(uint32_t i = 0; i < m_swapchainInfo.imageCount; ++i) {
             if (m_swapchainInfo.framebuffers[i] != VK_NULL_HANDLE) {
@@ -210,5 +209,3 @@ VkSwapchainModule::~VkSwapchainModule() {
         }
     }
 }
-
-

@@ -74,8 +74,9 @@ bool VkInstanceModule::Init(bool enableValidationLayers, uint32_t glfwExtentionC
 
 VkInstance VkInstanceModule::get_instance() const { return instance; }
 
-VkInstanceModule::~VkInstanceModule() {
+
+void VkInstanceModule::cleanup() {
     if (instance != VK_NULL_HANDLE) {
         vkDestroyInstance(instance, nullptr);
-    } 
+    }
 }

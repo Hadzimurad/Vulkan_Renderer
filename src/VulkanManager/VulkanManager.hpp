@@ -1,7 +1,7 @@
 #pragma once
 #include "Core/window.hpp"
 #include "ECS/Components.hpp"
-#include "ECS/TransformComponents.hpp"
+//#include "ECS/TransformComponents.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include "ECS/World.hpp"
 #include "Core/ImGuiLayer/ImGuiLayer.hpp"
@@ -10,35 +10,36 @@
 #include "VkInitModules/VkRenderPassModule/VkRenderPassModule.hpp"
 #include "VkInitModules/VkSurfaceModule/VkSurfaceModule.hpp"
 #include "VkInitModules/VkSwapchainModule/VkSwapchainModule.hpp"
+#include "VkInitModules/VkPipelineModule/VkPipelineModule.hpp"
 #include "VulkanTypes.hpp"
 #include <cstring>
 #include <glm/glm.hpp>
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
-// Используем явные коды ошибок вместо исключений
-enum FileResult {
-    FILE_SUCCESS = 0,
-    FILE_ERROR_OPEN,
-    FILE_ERROR_READ,
-    FILE_ERROR_BUFFER_TOO_SMALL
-};
+constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
-// Слои валидации — наш главный инструмент отладки в Vulkan
-//const std::vector<const char*> validationLayers = {
-//    "VK_LAYER_KHRONOS_validation"
-//};
+struct FrameData {
+    VkCommandPool   commandPool             = VK_NULL_HANDLE;
+    VkCommandBuffer commandBuffer           = VK_NULL_HANDLE;
+    VkSemaphore     imageAvailableSemaphore = VK_NULL_HANDLE;
+    VkSemaphore     renderFinishedSemaphore = VK_NULL_HANDLE;
+    VkFence         inFlightFence           = VK_NULL_HANDLE;
+};
 
 class VulkanContext {
 public:
     bool init_vulkan_core(Window& window_vulkan);
-    void draw_frame(const World& world, GuiLayer& imgui);
+    void draw_frame(const World& world, GuiLayer& imgui, uint32_t index);
     void cleanup();
     // 2. Метод создания буфера и заливки данных вершин
-    void createVertexBuffer(const std::vector<Vertex> vertices);
+    bool createVertexBuffer(const Vertex* vertices);
     // Создание индексного буфера
-    void createIndexBuffer(const std::vector<uint16_t> indices);
+    //void createIndexBuffer(const std::vector<uint16_t> indices);
     void fillInitGUIStruct(VulkanGUICreateInfo& initImGuiStruct);
 private:
+    
+    FrameData m_frames[MAX_FRAMES_IN_FLIGHT];
+    uint32_t m_currentFrameIndex = 0;
 
     VkInstanceModule    m_instance;
     VkSurfaceModule     m_surface;
@@ -46,40 +47,17 @@ private:
     VkSwapchainModule   m_swapchain;
     VkRenderPassModule  m_geometryRenderPass;
     VkRenderPassModule  m_imGuiRenderPass;
+    VkPipelineModule m_pipeline{};
 
-    //Структуры для базовой инициализации
-    //VkInstance       instance_m         = VK_NULL_HANDLE;
-    //VkSurfaceKHR     surface_m          = VK_NULL_HANDLE;
-    //VkPhysicalDevice physicalDevice_m   = VK_NULL_HANDLE;
-    //VkDevice         device_m           = VK_NULL_HANDLE;
-    VkCommandPool    commandPool_m      = VK_NULL_HANDLE;    
-
-    //Командный буфер
-    VkCommandBuffer  currentCommandBuffer_m;
-    //Индексные буферы  
-    VkBuffer m_indexBuffer = VK_NULL_HANDLE;
-    VkDeviceMemory m_indexBufferMemory = VK_NULL_HANDLE; 
 
     //Вершинные буферы 
     VkBuffer         vertexBuffer_m     = VK_NULL_HANDLE;
     VkDeviceMemory vertexBufferMemory_m = VK_NULL_HANDLE;
 
-
-    // Структуры для организации кода
-    //VulkanQueue          m_queue{};
-    //VulkanSwapChain      m_swapChain{};
-    VulkanPipeline       m_pipeline{};
-    VulkanSyncPrimitives m_sync{};
-
-
-
-    
-    // Чтения файла шейдера в формате SPIR-V
-    FileResult readFile(const char* filepath, char* outBuffer, size_t bufferSize, size_t* outBytesRead);
-    // Создание шейдерного модуля
-    VkShaderModule createShaderModule(VkDevice device, const std::vector<char>& code);
+    // Функция для инициализации 
+    bool init_commands_and_sync();
     // Запсить команд в командный буфер
-    void recordCommandBuffer(const World& world, uint32_t imageIndex, GuiLayer& imgui);
+    //void recordCommandBuffer(const World& world, uint32_t imageIndex, GuiLayer& imgui);
     // Помошник для поиска памяти типа памяти на GPU
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 };

@@ -13,9 +13,9 @@ bool VkSurfaceModule::Init(VkInstance instance, GLFWwindow* windowHandle) {
     return true;
 }
 
-VkSurfaceModule::~VkSurfaceModule() {
+void VkSurfaceModule::cleanup() {
     if (m_surface != VK_NULL_HANDLE) {
         // Поверхность уничтожается через инстанс, поэтому мы запоминали его в m_instance
         vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
-    }
+    }   
 }

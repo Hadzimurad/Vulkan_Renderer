@@ -7,10 +7,10 @@
 class GuiLayer {
 public:
     GuiLayer() = default;
-    ~GuiLayer();
+    ~GuiLayer() = default;
     
     // Инициализация ресурсов для ImGui(Контекст, GLWF, и Vulkan Структур)
-    void Init(GLFWwindow* window, VulkanGUICreateInfo imGuiInfo);
+    bool init(GLFWwindow* window, VulkanGUICreateInfo imGuiInfo);
     
     //Начало нового кадра, вызывается в начале цикла отрисовки
     void BeginFrame();

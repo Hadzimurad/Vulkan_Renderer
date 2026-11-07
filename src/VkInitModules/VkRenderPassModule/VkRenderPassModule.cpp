@@ -71,8 +71,10 @@ bool VkRenderPassModule::Init(VkDevice device, VkFormat swapchainFormat, RenderP
     return true;
 }
 
-VkRenderPassModule::~VkRenderPassModule() {
+
+void VkRenderPassModule::cleanup() {
     if (m_renderPass != VK_NULL_HANDLE) {
         vkDestroyRenderPass(m_device, m_renderPass, nullptr);
     }
 }
+

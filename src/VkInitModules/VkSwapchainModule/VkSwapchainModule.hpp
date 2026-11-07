@@ -44,7 +44,8 @@ private:
 
 public:
     VkSwapchainModule() = default;
-    ~VkSwapchainModule();
+    ~VkSwapchainModule() = default;
+    void cleanup();
     VkSwapchainModule(const VkSwapchainModule&) = delete;
     VkSwapchainModule& operator=(const VkSwapchainModule&) = delete;
 

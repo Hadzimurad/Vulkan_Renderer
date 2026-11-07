@@ -1,12 +1,10 @@
 #include "ImGuiLayer.hpp"
-
+#include "LogError/LogError.hpp"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
-#include <stdexcept>
-#include <vector>
 
-void GuiLayer::Init(GLFWwindow* window, VulkanGUICreateInfo imGuiInfo) {
+bool GuiLayer::init(GLFWwindow* window, VulkanGUICreateInfo imGuiInfo) {
     m_Device = imGuiInfo.device;
 
     // 1. Создаем Descriptor Pool специально для нужд ImGui
@@ -30,16 +28,14 @@ void GuiLayer::Init(GLFWwindow* window, VulkanGUICreateInfo imGuiInfo) {
     pool_info.pPoolSizes = pool_sizes;
 
     if (vkCreateDescriptorPool(m_Device, &pool_info, nullptr, &m_DescriptorPool) != VK_SUCCESS) {
-        throw std::runtime_error("GuiLayer: Не удалось создать Descriptor Pool для ImGui!");
+        LOG_ERROR("Create Descriptor Pool is failed");
+        return false;
     }
     
       // 2. Инициализируем контекст самого ImGui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    
-    // Включаем поддержку Docking (вкладок), раз уж мы скачали эту ветку
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; 
 
     // Стилизация (Темная тема — классика)
     ImGui::StyleColorsDark();
@@ -49,7 +45,7 @@ void GuiLayer::Init(GLFWwindow* window, VulkanGUICreateInfo imGuiInfo) {
 
     // 4. Инициализируем бэкенд для Vulkan
     ImGui_ImplVulkan_InitInfo init_info = {};
-    init_info.PipelineInfoForViewports.RenderPass = imGuiInfo.renderPass;
+    init_info.PipelineInfoMain.RenderPass = imGuiInfo.renderPass;
     init_info.UseDynamicRendering = false;
     init_info.Instance = imGuiInfo.instance;
     init_info.PhysicalDevice = imGuiInfo.physicalDevice;
@@ -62,13 +58,10 @@ void GuiLayer::Init(GLFWwindow* window, VulkanGUICreateInfo imGuiInfo) {
     init_info.MinImageCount = imGuiInfo.minImageCount;
     init_info.ImageCount = imGuiInfo.imageCount;
     init_info.Allocator = nullptr;
-    init_info.CheckVkResultFn = [](VkResult err) { 
-        if (err != VK_SUCCESS) throw std::runtime_error("ImGui Vulkan Error!"); 
-    };
+    init_info.CheckVkResultFn = [](VkResult err) { ASSERT(err == VK_SUCCESS, "Failed to Init ImGui for Vulkan"); };
+    
     ImGui_ImplVulkan_Init(&init_info);
-    
-
-    
+    return true;
 }
 
 void GuiLayer::BeginFrame() {
@@ -87,7 +80,7 @@ void GuiLayer::Render(VkCommandBuffer commandBuffer) {
     // ПРОВЕРКА: Если рисовать нечего (или кадр еще не обновился), 
     // просто выходим, чтобы не передавать VK_NULL_HANDLE в Vulkan
     if (!drawData || drawData->CmdListsCount == 0) {
-        //throw std::runtime_error("ERROR data is null"); 
+        LOG_ERROR("ERROR data is null"); 
         return;
     }
     // Эта функция сама запишет все VkCmdDraw для интерфейса
@@ -107,6 +100,3 @@ void GuiLayer::Shutdown() {
     }
 }
 
-GuiLayer::~GuiLayer() {
-    //this->Shutdown();
-}

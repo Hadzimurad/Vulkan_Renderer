@@ -9,7 +9,8 @@ private:
 
 public:
     VkSurfaceModule() = default;
-    ~VkSurfaceModule();
+    ~VkSurfaceModule() = default;
+    void cleanup();
 
     // Запрещаем копирование
     VkSurfaceModule(const VkSurfaceModule&) = delete;

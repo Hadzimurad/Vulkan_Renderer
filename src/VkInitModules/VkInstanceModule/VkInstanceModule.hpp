@@ -10,9 +10,10 @@ private:
 
 public:
     VkInstanceModule() = default;
+    ~VkInstanceModule() = default;
     VkInstanceModule(const VkInstanceModule&) = delete;
     VkInstanceModule& operator=(const VkInstanceModule&) = delete;
-    ~VkInstanceModule();
+    void cleanup();
     
     bool Init(bool enableValidationLayers, uint32_t glfwExtentionCount, const char** glfwExtention); 
     VkInstance get_instance() const;
